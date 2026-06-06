@@ -2,26 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.toast-enter {
+  animation: slideIn 0.3s ease;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@media print {
+  body { background: white !important; }
+  .no-print { display: none !important; }
 }
