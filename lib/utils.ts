@@ -24,8 +24,8 @@ export function calculateTotals(lineItems: LineItem[]) {
     subtotal: Math.round(subtotal * 100) / 100,
     hst: Math.round(hst * 100) / 100,
     total: Math.round(total * 100) / 100,
-    commission_10: Math.round(subtotal * 0.1 * 100) / 100,
-    commission_12: Math.round(subtotal * 0.12 * 100) / 100,
+    commission_10: Math.round(subtotal * 0.15 * 100) / 100,
+    commission_12: Math.round(subtotal * 0.15 * 100) / 100,
   };
 }
 

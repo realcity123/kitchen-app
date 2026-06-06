@@ -45,22 +45,19 @@ export default function DashboardClient({ quotes: initial, userProfile }: Props)
     const paid = quotes.filter(q => q.status === 'paid').reduce((s, q) => s + q.total, 0);
     const outstanding = quotes.filter(q => q.status !== 'paid').reduce((s, q) => s + q.total, 0);
     const paidSubtotal = quotes.filter(q => q.status === 'paid').reduce((s, q) => s + q.subtotal, 0);
-    return { total, paid, outstanding, commission: paidSubtotal * 0.1 };
+    return { total, paid, outstanding, commission: paidSubtotal * 0.15 };
   }, [quotes]);
 
   const commissionData = useMemo(() => {
     const paid = quotes.filter(q => q.status === 'paid');
     const paidSub = paid.reduce((s, q) => s + q.subtotal, 0);
-    const allTime = paid.length;
-    const rate = allTime >= 40 ? 0.12 : 0.1;
-    const rateLabel = allTime >= 40 ? '12%' : '10%';
     const now = new Date();
     const monthly = paid.filter(q => {
       const d = new Date(q.paid_at || q.created_at);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
     const monthlySub = monthly.reduce((s, q) => s + q.subtotal, 0);
-    return { paidSub, commission10: paidSub * 0.1, commission12: paidSub * 0.12, allTime, rate, rateLabel, monthlyDeals: monthly.length, monthlySub, monthlyCommission: monthlySub * rate, dealsToNext: Math.max(0, 40 - allTime) };
+    return { paidSub, commission: paidSub * 0.15, allTime: paid.length, monthlyDeals: monthly.length, monthlySub, monthlyCommission: monthlySub * 0.15 };
   }, [quotes]);
 
   async function markPaid(q: Quote) {
@@ -143,7 +140,7 @@ export default function DashboardClient({ quotes: initial, userProfile }: Props)
             { icon: <FileText className="w-3.5 h-3.5 text-[#c2974a]" />, bg: 'bg-[#c2974a]/10', label: 'Total Quoted', value: formatCurrency(stats.total), sub: `${quotes.length} quotation${quotes.length !== 1 ? 's' : ''}`, color: 'text-[#1c1a17]' },
             { icon: <CheckCircle className="w-3.5 h-3.5 text-green-500" />, bg: 'bg-green-50', label: 'Total Paid', value: formatCurrency(stats.paid), sub: `${quotes.filter(q => q.status === 'paid').length} paid`, color: 'text-green-600' },
             { icon: <Clock className="w-3.5 h-3.5 text-amber-500" />, bg: 'bg-amber-50', label: 'Outstanding', value: formatCurrency(stats.outstanding), sub: `${quotes.filter(q => q.status !== 'paid').length} pending`, color: 'text-amber-600' },
-            { icon: <TrendingUp className="w-3.5 h-3.5 text-[#c2974a]" />, bg: 'bg-[#c2974a]/10', label: 'Commission (10%)', value: formatCurrency(stats.commission), sub: 'of paid subtotals', color: 'text-[#a67c30]' },
+            { icon: <TrendingUp className="w-3.5 h-3.5 text-[#c2974a]" />, bg: 'bg-[#c2974a]/10', label: 'Commission (15%)', value: formatCurrency(stats.commission), sub: 'of paid subtotals', color: 'text-[#a67c30]' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm border border-[#e6ddcf]">
               <div className="flex items-center gap-2 mb-2">
@@ -205,7 +202,7 @@ export default function DashboardClient({ quotes: initial, userProfile }: Props)
                     <td className="py-3.5 px-4 hidden md:table-cell"><span className="text-sm text-gray-500">{q.client_city || '—'}</span></td>
                     <td className="py-3.5 px-4 text-right"><span className="text-sm font-semibold text-[#1c1a17]">{formatCurrency(q.total)}</span></td>
                     <td className="py-3.5 px-4 text-center">{statusBadge(q.status)}</td>
-                    <td className="py-3.5 px-4 text-right hidden lg:table-cell"><span className="text-sm text-[#a67c30] font-medium">{formatCurrency((q.commission_10 || q.subtotal * 0.1))}</span></td>
+                    <td className="py-3.5 px-4 text-right hidden lg:table-cell"><span className="text-sm text-[#a67c30] font-medium">{formatCurrency(q.subtotal * 0.15)}</span></td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center justify-end gap-1.5">
                         <button onClick={() => router.push(`/quote/${q.id}`)} title="View" className="p-1.5 text-gray-400 hover:text-[#c2974a] rounded-lg hover:bg-[#c2974a]/10 transition-colors"><Eye className="w-4 h-4" /></button>
@@ -235,37 +232,25 @@ export default function DashboardClient({ quotes: initial, userProfile }: Props)
           <div className="bg-[#1c1a17] rounded-2xl p-6 text-white shadow-lg">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-[#c2974a]/20 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-[#c2974a]" /></div>
-              <h2 className="text-lg font-bold">Commission Summary</h2>
+              <div>
+                <h2 className="text-lg font-bold">Commission Summary</h2>
+                <p className="text-xs text-gray-400 mt-0.5">15% flat rate on all paid subtotals</p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* All-time */}
               <div className="bg-white/5 rounded-xl p-4">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">All-Time Paid</div>
-                {[['Paid Subtotal', formatCurrency(commissionData.paidSub), 'text-white'], ['@ 10%', formatCurrency(commissionData.commission10), 'text-[#c2974a]'], ['@ 12%', formatCurrency(commissionData.commission12), 'text-[#c2974a]']].map(([l, v, c]) => (
+                {[['Deals Closed', String(commissionData.allTime), 'text-white'], ['Paid Subtotal', formatCurrency(commissionData.paidSub), 'text-white'], ['Commission (15%)', formatCurrency(commissionData.commission), 'text-[#c2974a]']].map(([l, v, c]) => (
                   <div key={l} className="flex justify-between mb-2"><span className="text-sm text-gray-300">{l}</span><span className={`text-sm font-semibold ${c}`}>{v}</span></div>
                 ))}
               </div>
               {/* This month */}
               <div className="bg-white/5 rounded-xl p-4">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{monthName}</div>
-                {[['Deals Closed', String(commissionData.monthlyDeals), 'text-white'], ['Subtotal', formatCurrency(commissionData.monthlySub), 'text-white'], [`Commission (${commissionData.rateLabel})`, formatCurrency(commissionData.monthlyCommission), 'text-[#c2974a]']].map(([l, v, c]) => (
+                {[['Deals Closed', String(commissionData.monthlyDeals), 'text-white'], ['Subtotal', formatCurrency(commissionData.monthlySub), 'text-white'], ['Commission (15%)', formatCurrency(commissionData.monthlyCommission), 'text-[#c2974a]']].map(([l, v, c]) => (
                   <div key={l} className="flex justify-between mb-2"><span className="text-sm text-gray-300">{l}</span><span className={`text-sm font-semibold ${c}`}>{v}</span></div>
                 ))}
-              </div>
-              {/* Phase tracker */}
-              <div className="bg-white/5 rounded-xl p-4">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Phase Tracker</div>
-                <div className="flex justify-between mb-2"><span className="text-sm text-gray-300">Total Deals</span><span className="text-sm font-semibold text-white">{commissionData.allTime}</span></div>
-                <div className="flex justify-between mb-3"><span className="text-sm text-gray-300">Current Rate</span><span className={`text-sm font-bold ${commissionData.allTime >= 40 ? 'text-green-400' : 'text-[#c2974a]'}`}>{commissionData.rateLabel}</span></div>
-                {commissionData.allTime < 40 ? (
-                  <div className="border-t border-white/10 pt-3">
-                    <div className="flex justify-between text-xs text-gray-400 mb-1.5"><span>{commissionData.allTime} deals</span><span>40 deals (12%)</span></div>
-                    <div className="w-full bg-white/10 rounded-full h-2">
-                      <div className="bg-[#c2974a] h-2 rounded-full" style={{ width: `${Math.min((commissionData.allTime / 40) * 100, 100)}%` }} />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">{commissionData.dealsToNext} more deal{commissionData.dealsToNext !== 1 ? 's' : ''} to unlock 12% rate</p>
-                  </div>
-                ) : <p className="text-xs text-green-400 font-medium border-t border-white/10 pt-3">12% rate unlocked! Keep it up.</p>}
               </div>
             </div>
           </div>

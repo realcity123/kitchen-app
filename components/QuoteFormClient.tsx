@@ -239,7 +239,7 @@ export default function QuoteFormClient({ nextQuoteNumber, mode, existingQuote }
                 <span className="font-bold text-[#1c1a17]">Total</span>
                 <span className="font-black text-[#1c1a17] text-lg">${totals.total.toFixed(2)}</span>
               </div>
-              <div className="text-xs text-[#a67c30] text-right">Commission (10%): ${totals.commission_10.toFixed(2)}</div>
+              <div className="text-xs text-[#a67c30] text-right">Commission (15%): ${totals.commission_10.toFixed(2)}</div>
             </div>
           </div>
 
